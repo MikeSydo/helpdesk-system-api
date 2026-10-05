@@ -5,11 +5,15 @@
     <ProjectReference Include="..\HelpDesk.Application\HelpDesk.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>HelpDesk.Infrastructure</RootNamespace>
+    <RootNamespace>HelpDesk.DataAccess</RootNamespace>
   </PropertyGroup>
 
 </Project>
