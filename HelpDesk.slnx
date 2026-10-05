@@ -1,4 +1,5 @@
 <Solution>
+  <Folder Name="/Solution Items/" />
   <Folder Name="/src/">
     <Project Path="src/HelpDesk.API/HelpDesk.API.csproj" />
     <Project Path="src/HelpDesk.Application/HelpDesk.Application.csproj" />

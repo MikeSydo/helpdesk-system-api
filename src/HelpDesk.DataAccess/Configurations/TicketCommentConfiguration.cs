@@ -8,7 +8,7 @@ public class TicketCommentConfiguration : IEntityTypeConfiguration<TicketComment
 {
     public void Configure(EntityTypeBuilder<TicketComment> builder)
     {
-        builder.ToTable("Categories");
+        builder.ToTable("TicketComments");
         builder.HasKey(c => c.Id);
         
         builder.Property(c => c.Id).ValueGeneratedNever();
