@@ -55,6 +55,6 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     public async Task<ActionResult<TicketResponse>> DeleteTicket(Guid id, CancellationToken cancellationToken)
     {
         bool status = await _ticketsService.DeleteAsync(id, cancellationToken);
-        return status ? Ok(id) : NoContent();
+        return status ? Ok(id) : NotFound();
     }
 }
