@@ -18,8 +18,4 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HelpDesk.Application\HelpDesk.Application.csproj" />
-  </ItemGroup>
-
 </Project>
