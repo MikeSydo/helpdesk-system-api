@@ -1,4 +1,4 @@
-﻿using HelpDesk.Domain.Entities;
+using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
 
 namespace HelpDesk.Tests.Domain;
@@ -180,5 +180,19 @@ public class TicketEdgeCaseTests
         ticket.ChangeStatus(TicketStatus.Open);
 
         Assert.Equal(TicketStatus.Open, ticket.Status);
+    }
+
+    [Fact]
+    public void ChangeCategory_WithEmptyGuid_ShouldThrowArgumentException()
+    {
+        Ticket ticket = Ticket.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Title",
+            "Description");
+
+        Action act = () => ticket.ChangeCategory(Guid.Empty);
+
+        Assert.Throws<ArgumentException>(act);
     }
 }

@@ -1,4 +1,4 @@
-﻿using HelpDesk.Application.Categories;
+using HelpDesk.Application.Categories;
 using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Tickets.Dtos;
 using HelpDesk.Domain.Entities;
@@ -113,6 +113,11 @@ public class TicketServiceTests
             Guid.NewGuid(),
             TicketPriority.Medium);
 
+        Category category = Category.Create("Category 1");
+        _categoryRepositoryMock
+            .Setup(x => x.GetByIdAsync(request.CategoryId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(category);
+
         TicketResponse result = await _ticketService.CreateAsync(request, currentUserId);
 
         Assert.NotNull(result);
@@ -136,6 +141,11 @@ public class TicketServiceTests
             Guid.NewGuid(),
             TicketPriority.Low);
 
+        Category category = Category.Create("Category 1");
+        _categoryRepositoryMock
+            .Setup(x => x.GetByIdAsync(request.CategoryId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(category);
+
         await _ticketService.CreateAsync(request, currentUserId);
 
         _ticketRepositoryMock.Verify(
@@ -153,6 +163,11 @@ public class TicketServiceTests
             "Internet is unstable",
             Guid.NewGuid(),
             TicketPriority.High);
+
+        Category category = Category.Create("Category 1");
+        _categoryRepositoryMock
+            .Setup(x => x.GetByIdAsync(request.CategoryId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(category);
 
         await _ticketService.CreateAsync(request, currentUserId);
 
@@ -176,7 +191,7 @@ public class TicketServiceTests
 
         Ticket ticket = Ticket.Create(
             Guid.NewGuid(),
-            Guid.NewGuid(),
+            currentUserId,
             "Old title",
             "Old description",
             TicketPriority.Low);
@@ -207,7 +222,7 @@ public class TicketServiceTests
 
         Ticket ticket = Ticket.Create(
             Guid.NewGuid(),
-            Guid.NewGuid(),
+            currentUserId,
             "Old title",
             "Old description",
             TicketPriority.Low);
@@ -345,5 +360,248 @@ public class TicketServiceTests
         _ticketRepositoryMock.Verify(
             x => x.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenCategoryIdIsEmpty_ShouldThrowArgumentException()
+    {
+        Guid currentUserId = Guid.NewGuid();
+        CreateTicketRequest request = new(
+            "Title",
+            "Description",
+            Guid.Empty,
+            TicketPriority.Low);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _ticketService.CreateAsync(request, currentUserId));
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenCategoryNotFound_ShouldThrowKeyNotFoundException()
+    {
+        Guid currentUserId = Guid.NewGuid();
+        Guid categoryId = Guid.NewGuid();
+        CreateTicketRequest request = new(
+            "Title",
+            "Description",
+            categoryId,
+            TicketPriority.Low);
+
+        _categoryRepositoryMock
+            .Setup(x => x.GetByIdAsync(categoryId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Category?)null);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            _ticketService.CreateAsync(request, currentUserId));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenUserIsNotAuthor_ShouldThrowUnauthorizedAccessException()
+    {
+        Guid ticketId = Guid.NewGuid();
+        Guid authorId = Guid.NewGuid();
+        Guid anotherUserId = Guid.NewGuid();
+
+        Ticket ticket = Ticket.Create(
+            Guid.NewGuid(),
+            authorId,
+            "Old title",
+            "Old description",
+            TicketPriority.Low);
+
+        UpdateTicketRequest request = new(
+            "New title",
+            "New description",
+            ticket.CategoryId,
+            TicketPriority.Medium);
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ticket);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _ticketService.UpdateAsync(ticketId, request, anotherUserId));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenCategoryChanges_AndCategoryNotFound_ShouldThrowKeyNotFoundException()
+    {
+        Guid ticketId = Guid.NewGuid();
+        Guid currentUserId = Guid.NewGuid();
+        Guid oldCategoryId = Guid.NewGuid();
+        Guid newCategoryId = Guid.NewGuid();
+
+        Ticket ticket = Ticket.Create(
+            oldCategoryId,
+            currentUserId,
+            "Old title",
+            "Old description",
+            TicketPriority.Low);
+
+        UpdateTicketRequest request = new(
+            "New title",
+            "New description",
+            newCategoryId,
+            TicketPriority.Medium);
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ticket);
+
+        _categoryRepositoryMock
+            .Setup(x => x.GetByIdAsync(newCategoryId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Category?)null);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            _ticketService.UpdateAsync(ticketId, request, currentUserId));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenCategoryChanges_AndCategoryExists_ShouldUpdateCategory()
+    {
+        Guid ticketId = Guid.NewGuid();
+        Guid currentUserId = Guid.NewGuid();
+        Guid oldCategoryId = Guid.NewGuid();
+        Guid newCategoryId = Guid.NewGuid();
+
+        Ticket ticket = Ticket.Create(
+            oldCategoryId,
+            currentUserId,
+            "Old title",
+            "Old description",
+            TicketPriority.Low);
+
+        UpdateTicketRequest request = new(
+            "New title",
+            "New description",
+            newCategoryId,
+            TicketPriority.Medium);
+
+        Category newCategory = Category.Create("New Category");
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ticket);
+
+        _categoryRepositoryMock
+            .Setup(x => x.GetByIdAsync(newCategoryId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(newCategory);
+
+        TicketResponse? result = await _ticketService.UpdateAsync(ticketId, request, currentUserId);
+
+        Assert.NotNull(result);
+        Assert.Equal(newCategoryId, result.CategoryId);
+        _ticketRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_WhenTicketExists_ShouldUpdateStatusAndReturnResponse()
+    {
+        Guid ticketId = Guid.NewGuid();
+        Ticket ticket = Ticket.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Title",
+            "Description");
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ticket);
+
+        TicketResponse? result = await _ticketService.ChangeStatusAsync(ticketId, TicketStatus.InProgress, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(TicketStatus.InProgress, result.Status);
+        _ticketRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_WhenTicketDoesNotExist_ShouldReturnNull()
+    {
+        Guid ticketId = Guid.NewGuid();
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Ticket?)null);
+
+        TicketResponse? result = await _ticketService.ChangeStatusAsync(ticketId, TicketStatus.InProgress, CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task AssignSupportAsync_WhenTicketExists_ShouldAssignSupportAndReturnResponse()
+    {
+        Guid ticketId = Guid.NewGuid();
+        Guid supportUserId = Guid.NewGuid();
+
+        Ticket ticket = Ticket.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Title",
+            "Description");
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ticket);
+
+        TicketResponse? result = await _ticketService.AssignSupportAsync(ticketId, supportUserId, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(supportUserId, result.AssignedToSupportId);
+        _ticketRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AssignSupportAsync_WhenTicketDoesNotExist_ShouldReturnNull()
+    {
+        Guid ticketId = Guid.NewGuid();
+        Guid supportUserId = Guid.NewGuid();
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Ticket?)null);
+
+        TicketResponse? result = await _ticketService.AssignSupportAsync(ticketId, supportUserId, CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UnassignSupportAsync_WhenTicketExists_ShouldUnassignAndReturnResponse()
+    {
+        Guid ticketId = Guid.NewGuid();
+        Guid supportUserId = Guid.NewGuid();
+
+        Ticket ticket = Ticket.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Title",
+            "Description");
+        ticket.AssignTo(supportUserId);
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ticket);
+
+        TicketResponse? result = await _ticketService.UnassignSupportAsync(ticketId, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Null(result.AssignedToSupportId);
+        _ticketRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UnassignSupportAsync_WhenTicketDoesNotExist_ShouldReturnNull()
+    {
+        Guid ticketId = Guid.NewGuid();
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Ticket?)null);
+
+        TicketResponse? result = await _ticketService.UnassignSupportAsync(ticketId, CancellationToken.None);
+
+        Assert.Null(result);
     }
 }

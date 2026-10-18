@@ -1,4 +1,4 @@
-﻿using HelpDesk.Domain.Entities;
+using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
 
 namespace HelpDesk.Tests.Domain;
@@ -182,6 +182,36 @@ public class TicketTests
         DateTime oldUpdatedAt = ticket.UpdatedAt;
 
         ticket.ChangeStatus(TicketStatus.InProgress);
+
+        Assert.NotEqual(oldUpdatedAt, ticket.UpdatedAt);
+    }
+
+    [Fact]
+    public void ChangeCategory_WhenCalled_ShouldChangeCategoryId()
+    {
+        Ticket ticket = Ticket.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Title",
+            "Description");
+
+        Guid newCategoryId = Guid.NewGuid();
+        ticket.ChangeCategory(newCategoryId);
+
+        Assert.Equal(newCategoryId, ticket.CategoryId);
+    }
+
+    [Fact]
+    public void ChangeCategory_WhenCalled_ShouldUpdateUpdatedAt()
+    {
+        Ticket ticket = Ticket.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Title",
+            "Description");
+
+        DateTime oldUpdatedAt = ticket.UpdatedAt;
+        ticket.ChangeCategory(Guid.NewGuid());
 
         Assert.NotEqual(oldUpdatedAt, ticket.UpdatedAt);
     }
