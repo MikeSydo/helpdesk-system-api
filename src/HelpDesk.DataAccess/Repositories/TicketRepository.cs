@@ -1,6 +1,5 @@
 ﻿using HelpDesk.Application.Tickets;
 using HelpDesk.Domain.Entities;
-using HelpDesk.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.DataAccess.Repositories;

@@ -1,3 +1,4 @@
+using HelpDesk.Application.Categories;
 using HelpDesk.Application.Tickets;
 using HelpDesk.DataAccess;
 using HelpDesk.DataAccess.Repositories;
@@ -22,6 +23,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Dependency Injection
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 var app = builder.Build();
 

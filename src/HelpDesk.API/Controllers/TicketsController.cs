@@ -47,7 +47,7 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
         if (currentUserId == Guid.Empty)
             return BadRequest("currentUserId is required.");
         var ticket = await _ticketsService.UpdateAsync(id, request, currentUserId, cancellationToken);
-        if (ticket == null) return NotFound();
+        if (ticket == null) return NotFound(id);
         return Ok(ticket);
     }
 
@@ -55,6 +55,6 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     public async Task<ActionResult<TicketResponse>> DeleteTicket(Guid id, CancellationToken cancellationToken)
     {
         bool status = await _ticketsService.DeleteAsync(id, cancellationToken);
-        return status ? Ok(id) : NotFound();
+        return status ? Ok(id) : NotFound(id);
     }
 }
