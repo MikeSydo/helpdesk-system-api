@@ -5,17 +5,15 @@ namespace HelpDesk.Application.Tickets;
 
 public sealed class TicketService(ITicketRepository ticketRepository) : ITicketService
 {
-    private readonly ITicketRepository _ticketRepository = ticketRepository;
-
     public async Task<TicketResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        Ticket? ticket = await _ticketRepository.GetByIdAsync(id, cancellationToken);
+        Ticket? ticket = await ticketRepository.GetByIdAsync(id, cancellationToken);
         return ticket == null ? null : MapToResponse(ticket);
     }
 
     public async Task<IReadOnlyList<TicketResponse>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<Ticket> tickets = await _ticketRepository.GetAllAsync(cancellationToken);
+        IReadOnlyList<Ticket> tickets = await ticketRepository.GetAllAsync(cancellationToken);
         return [.. tickets.Select(MapToResponse)];
     }
 
@@ -24,30 +22,30 @@ public sealed class TicketService(ITicketRepository ticketRepository) : ITicketS
         Ticket ticket = Ticket.Create(request.CategoryId, currentUserId, request.Title, request.Description,
             request.Priority);
         
-        await _ticketRepository.AddAsync(ticket, cancellationToken);
+        await ticketRepository.AddAsync(ticket, cancellationToken);
         return MapToResponse(ticket);
     }
 
     public async Task<TicketResponse?> UpdateAsync(Guid id, UpdateTicketRequest request, Guid currentUserId,
         CancellationToken cancellationToken = default)
     {
-        Ticket? ticket = await _ticketRepository.GetByIdAsync(id, cancellationToken);
+        Ticket? ticket = await ticketRepository.GetByIdAsync(id, cancellationToken);
         if (ticket == null) return null;
         
         ticket.UpdateDetails(request.Title, request.Description);
         ticket.ChangePriority(request.Priority);
         
-        await _ticketRepository.SaveChangesAsync(cancellationToken);
+        await ticketRepository.SaveChangesAsync(cancellationToken);
         
         return MapToResponse(ticket);
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        Ticket? ticket = await _ticketRepository.GetByIdAsync(id, cancellationToken);
+        Ticket? ticket = await ticketRepository.GetByIdAsync(id, cancellationToken);
         if (ticket == null) return false;
         
-        await _ticketRepository.DeleteAsync(id, cancellationToken); 
+        await ticketRepository.DeleteAsync(id, cancellationToken); 
         
         return true;
     }
