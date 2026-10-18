@@ -6,29 +6,27 @@ namespace HelpDesk.DataAccess.Repositories;
 
 public class CategoryRepository(AppDbContext dbContext) : ICategoryRepository
 {
-    private readonly AppDbContext _dbContext = dbContext;
-    
     public async Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Categories
+        return await dbContext.Categories
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken: cancellationToken);
     }
 
     public async Task<List<Category>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Categories.AsNoTracking().ToListAsync(cancellationToken : cancellationToken);
+        return await dbContext.Categories.AsNoTracking().ToListAsync(cancellationToken : cancellationToken);
     }
 
     public async Task AddAsync(Category category, CancellationToken cancellationToken = default)
     {
-        await _dbContext.Categories.AddAsync(category,  cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.Categories.AddAsync(category,  cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateAsync(Category category, CancellationToken cancellationToken = default)
     {
-        await _dbContext.Categories.Where(c => c.Id == category.Id)
+        await dbContext.Categories.Where(c => c.Id == category.Id)
             .ExecuteUpdateAsync(s => s
                     .SetProperty(c => c.Name, category.Name)
                     .SetProperty(c => c.Description, category.Description)
@@ -38,20 +36,20 @@ public class CategoryRepository(AppDbContext dbContext) : ICategoryRepository
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        await _dbContext.Categories.Where(c => c.Id == id)
+        await dbContext.Categories.Where(c => c.Id == id)
             .ExecuteDeleteAsync(cancellationToken: cancellationToken);
     }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return _dbContext.SaveChangesAsync(cancellationToken);
+        return dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> ExistsByNameAsync(string requestName, CancellationToken cancellationToken)
     {
         string trimmedName = requestName.Trim();
 
-        return await _dbContext.Categories
+        return await dbContext.Categories
             .AnyAsync(c => EF.Functions.ILike(c.Name, trimmedName), cancellationToken);
     }
 }
