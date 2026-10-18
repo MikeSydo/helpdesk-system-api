@@ -49,6 +49,15 @@ public class Ticket
         Description = description.Trim();
         Touch();
     }
+
+    public void ChangeCategory(Guid categoryId)
+    {
+        if(categoryId == Guid.Empty ) 
+            throw new ArgumentException("Category is required.", nameof(categoryId));
+        CategoryId = categoryId;
+        Touch();
+    }
+    
     public void ChangeStatus(TicketStatus newStatus)
     {
         if (Status == TicketStatus.Closed && newStatus != TicketStatus.Closed)

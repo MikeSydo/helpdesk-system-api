@@ -8,19 +8,17 @@ namespace HelpDesk.API.Controllers;
 [Route("api/[controller]")]
 public class CategoriesController(ICategoryService categoryService) : ControllerBase
 {
-    private readonly ICategoryService _categoryService = categoryService;
-
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CategoryResponse>>> GetCategories(CancellationToken cancellationToken)
     {
-        var categories = await _categoryService.GetAllAsync(cancellationToken);
+        var categories = await categoryService.GetAllAsync(cancellationToken);
         return Ok(categories);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<CategoryResponse>> GetCategory(Guid id, CancellationToken cancellationToken)
     {
-        var category = await _categoryService.GetByIdAsync(id, cancellationToken);
+        var category = await categoryService.GetByIdAsync(id, cancellationToken);
         if (category == null) return NotFound(id);
         return Ok(category);
     }
@@ -29,7 +27,7 @@ public class CategoriesController(ICategoryService categoryService) : Controller
     public async Task<ActionResult<CategoryResponse>> CreateCategory([FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        CategoryResponse category = await _categoryService.CreateAsync(request, cancellationToken);
+        CategoryResponse category = await categoryService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(
             nameof(GetCategory),
             new { id = category.Id },
@@ -40,7 +38,7 @@ public class CategoriesController(ICategoryService categoryService) : Controller
     public async Task<ActionResult<CategoryResponse>> UpdateCategory(Guid id, [FromBody] UpdateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        var category = await _categoryService.UpdateAsync(id, request, cancellationToken);
+        var category = await categoryService.UpdateAsync(id, request, cancellationToken);
         if  (category == null) return NotFound(id);
         return Ok(category);
     }
@@ -48,7 +46,7 @@ public class CategoriesController(ICategoryService categoryService) : Controller
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<CategoryResponse>> DeleteCategory(Guid id, CancellationToken cancellationToken)
     {
-        var status = await _categoryService.DeleteAsync(id, cancellationToken);
+        var status = await categoryService.DeleteAsync(id, cancellationToken);
         return status ? Ok(status) : NotFound(id);
     }
 }

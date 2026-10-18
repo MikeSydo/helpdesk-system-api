@@ -20,6 +20,11 @@ public class CategoryService(ICategoryRepository categoryRepository) : ICategory
     public async Task<CategoryResponse> CreateAsync(CreateCategoryRequest request, 
         CancellationToken cancellationToken = default)
     {
+        if (await categoryRepository.ExistsByNameAsync(request.Name, cancellationToken))
+        {
+            throw new InvalidOperationException($"Category with this name '{request.Name}' is already created.");
+        }
+        
         Category category = Category.Create(request.Name, request.Description);
         await categoryRepository.AddAsync(category, cancellationToken);
         return MapToResponse(category);

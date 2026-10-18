@@ -46,4 +46,10 @@ public class CategoryRepository(AppDbContext dbContext) : ICategoryRepository
     {
         return _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<bool> ExistsByNameAsync(string requestName, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Categories
+            .AnyAsync(c => c.Name.ToLower() == requestName.Trim().ToLower(), cancellationToken);
+    }
 }

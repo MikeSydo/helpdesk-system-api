@@ -1,3 +1,4 @@
+using HelpDesk.API;
 using HelpDesk.Application.Categories;
 using HelpDesk.Application.Tickets;
 using HelpDesk.DataAccess;
@@ -26,6 +27,9 @@ builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 

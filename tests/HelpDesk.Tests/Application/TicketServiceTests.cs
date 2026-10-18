@@ -1,4 +1,5 @@
-﻿using HelpDesk.Application.Tickets;
+﻿using HelpDesk.Application.Categories;
+using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Tickets.Dtos;
 using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
@@ -9,12 +10,15 @@ namespace HelpDesk.Tests.Application;
 public class TicketServiceTests
 {
     private readonly Mock<ITicketRepository> _ticketRepositoryMock;
+    // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+    private readonly Mock<ICategoryRepository> _categoryRepositoryMock;
     private readonly TicketService _ticketService;
 
     public TicketServiceTests()
     {
         _ticketRepositoryMock = new Mock<ITicketRepository>();
-        _ticketService = new TicketService(_ticketRepositoryMock.Object);
+        _categoryRepositoryMock = new Mock<ICategoryRepository>();
+        _ticketService = new TicketService(_ticketRepositoryMock.Object, _categoryRepositoryMock.Object);
     }
 
     [Fact]
