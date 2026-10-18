@@ -49,7 +49,9 @@ public class CategoryRepository(AppDbContext dbContext) : ICategoryRepository
 
     public async Task<bool> ExistsByNameAsync(string requestName, CancellationToken cancellationToken)
     {
+        string trimmedName = requestName.Trim();
+
         return await _dbContext.Categories
-            .AnyAsync(c => c.Name.ToLower() == requestName.Trim().ToLower(), cancellationToken);
+            .AnyAsync(c => EF.Functions.ILike(c.Name, trimmedName), cancellationToken);
     }
 }
