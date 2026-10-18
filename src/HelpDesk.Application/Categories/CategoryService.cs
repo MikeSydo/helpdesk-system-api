@@ -1,4 +1,4 @@
-﻿using HelpDesk.Application.Categories.Dtos;
+using HelpDesk.Application.Categories.Dtos;
 using HelpDesk.Domain.Entities;
 
 namespace HelpDesk.Application.Categories;
@@ -35,6 +35,12 @@ public class CategoryService(ICategoryRepository categoryRepository) : ICategory
     {
         Category? category = await categoryRepository.GetByIdAsync(id, cancellationToken);
         if (category == null) return null;
+        
+        if (category.Name != request.Name &&
+            await categoryRepository.ExistsByNameAsync(request.Name, cancellationToken))
+        {
+            throw new InvalidOperationException($"Category with name '{request.Name}' already exists.");
+        }
         
         category.Update(request.Name,  request.Description);
         
