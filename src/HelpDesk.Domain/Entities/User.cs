@@ -9,7 +9,9 @@ public class User
     public string Email { get; private set; }
     public string PasswordHash { get; private set; }
     public UserRole  Role { get; private set; }
+    public bool IsActive { get; private set; } = true;
     public DateTime CreatedAt { get; private set; } =  DateTime.UtcNow;
+    public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
     private User(string name, string email, string passwordHash, UserRole role)
     {
@@ -30,16 +32,36 @@ public class User
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         Name = name.Trim();
+        Touch();
     }
     public void UpdateEmail(string email)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
         Email = email.Trim();
+        Touch();
     }
     public void UpdatePasswordHash(string passwordHash)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
         PasswordHash = passwordHash;
+        Touch();
     }
-    public void UpdateRole(UserRole role) => Role = role;
+    public void ChangeRole(UserRole role)
+    {
+        Role = role;
+        Touch();
+    }
+
+    public void Deactivate()
+    {
+        if (!IsActive)
+        {
+            return;
+        }
+
+        IsActive = false;
+        Touch();
+    }
+
+    private void Touch() => UpdatedAt = DateTime.UtcNow;
 }

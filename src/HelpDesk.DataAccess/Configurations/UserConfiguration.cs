@@ -32,5 +32,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion<string>();
         
         builder.Property(u => u.CreatedAt).IsRequired();
+        
+        builder.Property(u => u.UpdatedAt).IsRequired();
+        
+        builder.Property(u => u.IsActive).IsRequired();
     }
 }
