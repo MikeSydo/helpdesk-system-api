@@ -30,7 +30,6 @@ public class CategoryRepository(AppDbContext dbContext) : ICategoryRepository
             .ExecuteUpdateAsync(s => s
                     .SetProperty(c => c.Name, category.Name)
                     .SetProperty(c => c.Description, category.Description)
-                    .SetProperty(c => c.Tickets, category.Tickets)
                 ,cancellationToken: cancellationToken);
     }
 
@@ -45,11 +44,22 @@ public class CategoryRepository(AppDbContext dbContext) : ICategoryRepository
         return dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> ExistsByNameAsync(string requestName, CancellationToken cancellationToken)
+    public async Task<bool> ExistsByNameAsync(
+        string requestName,
+        CancellationToken cancellationToken,
+        Guid? excludedCategoryId = null)
     {
         string trimmedName = requestName.Trim();
 
         return await dbContext.Categories
-            .AnyAsync(c => EF.Functions.ILike(c.Name, trimmedName), cancellationToken);
+            .AnyAsync(
+                c => EF.Functions.ILike(c.Name, trimmedName) &&
+                     (!excludedCategoryId.HasValue || c.Id != excludedCategoryId.Value),
+                cancellationToken);
+    }
+
+    public Task<bool> HasTicketsAsync(Guid categoryId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Tickets.AnyAsync(t => t.CategoryId == categoryId, cancellationToken);
     }
 }

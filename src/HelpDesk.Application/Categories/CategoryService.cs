@@ -36,15 +36,15 @@ public class CategoryService(ICategoryRepository categoryRepository) : ICategory
         Category? category = await categoryRepository.GetByIdAsync(id, cancellationToken);
         if (category == null) return null;
         
-        if (category.Name != request.Name &&
-            await categoryRepository.ExistsByNameAsync(request.Name, cancellationToken))
+        string normalizedName = request.Name.Trim();
+        if (!string.Equals(category.Name, normalizedName, StringComparison.OrdinalIgnoreCase) &&
+            await categoryRepository.ExistsByNameAsync(request.Name, cancellationToken, category.Id))
         {
             throw new InvalidOperationException($"Category with name '{request.Name}' already exists.");
         }
         
         category.Update(request.Name,  request.Description);
-        
-        await categoryRepository.SaveChangesAsync(cancellationToken);
+        await categoryRepository.UpdateAsync(category, cancellationToken);
             
         return MapToResponse(category);
     }
@@ -53,7 +53,13 @@ public class CategoryService(ICategoryRepository categoryRepository) : ICategory
     {
         Category? category = await categoryRepository.GetByIdAsync(id, cancellationToken);
         if (category == null) return false;
-        
+
+        if (await categoryRepository.HasTicketsAsync(id, cancellationToken))
+        {
+            throw new InvalidOperationException(
+                $"Category '{id}' cannot be deleted because it has tickets.");
+        }
+
         await categoryRepository.DeleteAsync(id, cancellationToken); 
         
         return true;
@@ -61,6 +67,6 @@ public class CategoryService(ICategoryRepository categoryRepository) : ICategory
     
     private static CategoryResponse MapToResponse(Category category)
     {
-        return new CategoryResponse(category.Id, category.Name, category.Description , category.Tickets);
+        return new CategoryResponse(category.Id, category.Name, category.Description);
     }
 }

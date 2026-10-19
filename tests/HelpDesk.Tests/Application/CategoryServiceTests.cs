@@ -190,7 +190,7 @@ public class CategoryServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_WhenCategoryExists_ShouldCallSaveChangesAsync()
+    public async Task UpdateAsync_WhenCategoryExists_ShouldCallUpdateAsync()
     {
         Guid id = Guid.NewGuid();
         Category category = Category.Create("Old Name");
@@ -201,13 +201,21 @@ public class CategoryServiceTests
             .ReturnsAsync(category);
 
         _categoryRepositoryMock
-            .Setup(x => x.ExistsByNameAsync(request.Name, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsByNameAsync(
+                request.Name,
+                It.IsAny<CancellationToken>(),
+                category.Id))
             .ReturnsAsync(false);
 
         await _categoryService.UpdateAsync(id, request);
 
         _categoryRepositoryMock.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            x => x.UpdateAsync(
+                It.Is<Category>(c =>
+                    c.Id == category.Id &&
+                    c.Name == request.Name &&
+                    c.Description == request.Description),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -255,7 +263,10 @@ public class CategoryServiceTests
             .ReturnsAsync(category);
 
         _categoryRepositoryMock
-            .Setup(x => x.ExistsByNameAsync(request.Name, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsByNameAsync(
+                request.Name,
+                It.IsAny<CancellationToken>(),
+                category.Id))
             .ReturnsAsync(true);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -274,7 +285,10 @@ public class CategoryServiceTests
             .ReturnsAsync(category);
 
         _categoryRepositoryMock
-            .Setup(x => x.ExistsByNameAsync(request.Name, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsByNameAsync(
+                request.Name,
+                It.IsAny<CancellationToken>(),
+                category.Id))
             .ReturnsAsync(true);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -333,6 +347,27 @@ public class CategoryServiceTests
         _categoryRepositoryMock.Verify(
             x => x.DeleteAsync(id, It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenCategoryHasTickets_ShouldThrowInvalidOperationException()
+    {
+        Guid id = Guid.NewGuid();
+        Category category = Category.Create("Hardware");
+
+        _categoryRepositoryMock
+            .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(category);
+        _categoryRepositoryMock
+            .Setup(x => x.HasTicketsAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _categoryService.DeleteAsync(id));
+
+        _categoryRepositoryMock.Verify(
+            x => x.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

@@ -38,6 +38,19 @@ public class CategoriesApiTests(CustomWebApplicationFactory factory) :
     }
 
     [Fact]
+    public async Task Delete_WhenCategoryExists_ShouldReturnNoContent()
+    {
+        CreateCategoryRequest request = new($"Category-{Guid.NewGuid():N}", null);
+        HttpResponseMessage createResponse = await _client.PostAsJsonAsync("/api/Categories", request);
+        createResponse.EnsureSuccessStatusCode();
+        CategoryResponse? category = await createResponse.Content.ReadFromJsonAsync<CategoryResponse>();
+
+        HttpResponseMessage response = await _client.DeleteAsync($"/api/Categories/{category!.Id}");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Post_WithEmptyName_ShouldReturnBadRequest()
     {
         CreateCategoryRequest request = new("", "Some description");
