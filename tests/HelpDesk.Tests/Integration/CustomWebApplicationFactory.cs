@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
 
 namespace HelpDesk.Tests.Integration;
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     

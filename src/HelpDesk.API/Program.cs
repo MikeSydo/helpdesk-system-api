@@ -1,6 +1,7 @@
 using HelpDesk.API;
 using HelpDesk.Application.Categories;
 using HelpDesk.Application.Tickets;
+using HelpDesk.Application.Users;
 using HelpDesk.DataAccess;
 using HelpDesk.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,9 @@ builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
