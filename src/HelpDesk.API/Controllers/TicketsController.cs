@@ -28,6 +28,7 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     public async Task<ActionResult<TicketResponse>> CreateTicket([FromBody] CreateTicketRequest request, 
         [FromQuery] Guid currentUserId, CancellationToken cancellationToken)
     {
+        // TODO: Replace currentUserId with the authenticated user's claims via ICurrentUser.
         if (currentUserId == Guid.Empty)
             return BadRequest("currentUserId is required.");
 
@@ -43,6 +44,7 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     public async Task<ActionResult<TicketResponse>> UpdateTicket(Guid id, [FromBody] UpdateTicketRequest request,
         [FromQuery] Guid currentUserId, CancellationToken cancellationToken)
     {
+        // TODO: Replace currentUserId with the authenticated user's claims via ICurrentUser.
         if (currentUserId == Guid.Empty)
             return BadRequest("currentUserId is required.");
         var ticket = await ticketsService.UpdateAsync(id, request, currentUserId, cancellationToken);
@@ -53,14 +55,16 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<TicketResponse>> DeleteTicket(Guid id, CancellationToken cancellationToken)
     {
+        // TODO: Require ownership or Support/Admin authorization when authentication is implemented.
         bool status = await ticketsService.DeleteAsync(id, cancellationToken);
-        return status ? Ok(id) : NotFound(id);
+        return status ? NoContent() : NotFound(id);
     }
     
     [HttpPatch("{id:guid}/status")]
     public async Task<ActionResult<TicketResponse>> ChangeStatus(Guid id, [FromBody] TicketStatus newStatus,
         CancellationToken cancellationToken)
     {
+        // TODO: Require SupportOrAdmin authorization when authentication is implemented.
         var result = await ticketsService.ChangeStatusAsync(id, newStatus, cancellationToken);
         return result == null ? NotFound() : Ok(result);
     }
@@ -69,6 +73,7 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     public async Task<ActionResult<TicketResponse>> AssignSupport(Guid id, Guid supportUserId,
         CancellationToken cancellationToken)
     {
+        // TODO: Require SupportOrAdmin authorization when authentication is implemented.
         var result = await ticketsService.AssignSupportAsync(id, supportUserId, cancellationToken);
         return result == null ? NotFound() : Ok(result);
     }
@@ -76,6 +81,7 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     [HttpDelete("{id:guid}/assign")]
     public async Task<ActionResult<TicketResponse>> UnassignSupport(Guid id, CancellationToken cancellationToken)
     {
+        // TODO: Require SupportOrAdmin authorization when authentication is implemented.
         var result = await ticketsService.UnassignSupportAsync(id, cancellationToken);
         return result == null ? NotFound() : Ok(result);
     }

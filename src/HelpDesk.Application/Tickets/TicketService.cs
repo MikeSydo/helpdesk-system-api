@@ -58,7 +58,7 @@ public sealed class TicketService(ITicketRepository ticketRepository, ICategoryR
         ticket.UpdateDetails(request.Title, request.Description);
         ticket.ChangePriority(request.Priority);
         
-        await ticketRepository.SaveChangesAsync(cancellationToken);
+        await ticketRepository.UpdateAsync(ticket, cancellationToken);
         
         return MapToResponse(ticket);
     }
@@ -80,7 +80,7 @@ public sealed class TicketService(ITicketRepository ticketRepository, ICategoryR
         if (ticket == null) return null;
 
         ticket.ChangeStatus(newStatus);
-        await ticketRepository.SaveChangesAsync(cancellationToken);
+        await ticketRepository.UpdateAsync(ticket, cancellationToken);
         return MapToResponse(ticket);
     }
 
@@ -91,7 +91,7 @@ public sealed class TicketService(ITicketRepository ticketRepository, ICategoryR
         if (ticket == null) return null;
 
         ticket.AssignTo(supportUserId);
-        await ticketRepository.SaveChangesAsync(cancellationToken);
+        await ticketRepository.UpdateAsync(ticket, cancellationToken);
         return MapToResponse(ticket);
     }
 
@@ -101,7 +101,7 @@ public sealed class TicketService(ITicketRepository ticketRepository, ICategoryR
         if (ticket == null) return null;
 
         ticket.Unassign();
-        await ticketRepository.SaveChangesAsync(cancellationToken);
+        await ticketRepository.UpdateAsync(ticket, cancellationToken);
         return MapToResponse(ticket);
     }
     

@@ -17,6 +17,7 @@ public class Ticket
 
     public Category Category { get; private set; } = null!;
     public User CreatedByUser { get; private set; } = null!;
+    // ReSharper disable once UnusedAutoPropertyAccessor.Local
     public User? AssignedToSupport { get; private set; }
     public List<TicketComment> Comments { get; private set; } = [];
 
@@ -60,8 +61,25 @@ public class Ticket
     
     public void ChangeStatus(TicketStatus newStatus)
     {
-        if (Status == TicketStatus.Closed && newStatus != TicketStatus.Closed)
-            throw new InvalidOperationException("A closed ticket cannot be reopened.");
+        if (newStatus == Status)
+            return;
+
+        bool isAllowed = (Status, newStatus) switch
+        {
+            (TicketStatus.Open, TicketStatus.InProgress) => true,
+            (TicketStatus.Open, TicketStatus.Canceled) => true,
+            (TicketStatus.InProgress, TicketStatus.Resolved) => true,
+            (TicketStatus.InProgress, TicketStatus.Canceled) => true,
+            (TicketStatus.Resolved, TicketStatus.Closed) => true,
+            _ => false
+        };
+
+        if (!isAllowed)
+        {
+            throw new InvalidOperationException(
+                $"Ticket status cannot change from {Status} to {newStatus}.");
+        }
+
         Status = newStatus;
         Touch();
     }

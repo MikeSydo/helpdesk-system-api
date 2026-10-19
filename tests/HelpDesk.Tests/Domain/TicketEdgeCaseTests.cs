@@ -184,6 +184,36 @@ public class TicketEdgeCaseTests
     }
 
     [Fact]
+    public void ChangeStatus_FromOpenToResolved_ShouldThrowInvalidOperationException()
+    {
+        Ticket ticket = Ticket.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Title",
+            "Description");
+
+        Assert.Throws<InvalidOperationException>(() =>
+            ticket.ChangeStatus(TicketStatus.Resolved));
+    }
+
+    [Fact]
+    public void ChangeStatus_FromClosedToOpen_ShouldThrowInvalidOperationException()
+    {
+        Ticket ticket = Ticket.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Title",
+            "Description");
+
+        ticket.ChangeStatus(TicketStatus.InProgress);
+        ticket.ChangeStatus(TicketStatus.Resolved);
+        ticket.ChangeStatus(TicketStatus.Closed);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            ticket.ChangeStatus(TicketStatus.Open));
+    }
+
+    [Fact]
     public void ChangeCategory_WithEmptyGuid_ShouldThrowArgumentException()
     {
         Ticket ticket = Ticket.Create(

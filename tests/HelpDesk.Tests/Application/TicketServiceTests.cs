@@ -215,7 +215,7 @@ public class TicketServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_WhenTicketExists_ShouldCallSaveChangesAsync()
+    public async Task UpdateAsync_WhenTicketExists_ShouldCallUpdateAsync()
     {
         Guid ticketId = Guid.NewGuid();
         Guid currentUserId = Guid.NewGuid();
@@ -240,7 +240,7 @@ public class TicketServiceTests
         await _ticketService.UpdateAsync(ticketId, request, currentUserId);
 
         _ticketRepositoryMock.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            x => x.UpdateAsync(It.IsAny<Ticket>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -266,7 +266,7 @@ public class TicketServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_WhenTicketDoesNotExist_ShouldNotCallSaveChangesAsync()
+    public async Task UpdateAsync_WhenTicketDoesNotExist_ShouldNotCallUpdateAsync()
     {
         Guid ticketId = Guid.NewGuid();
         Guid currentUserId = Guid.NewGuid();
@@ -284,7 +284,7 @@ public class TicketServiceTests
         await _ticketService.UpdateAsync(ticketId, request, currentUserId);
 
         _ticketRepositoryMock.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            x => x.UpdateAsync(It.IsAny<Ticket>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -491,7 +491,9 @@ public class TicketServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(newCategoryId, result.CategoryId);
-        _ticketRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _ticketRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Ticket>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -512,7 +514,9 @@ public class TicketServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(TicketStatus.InProgress, result.Status);
-        _ticketRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _ticketRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Ticket>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -549,7 +553,9 @@ public class TicketServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(supportUserId, result.AssignedToSupportId);
-        _ticketRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _ticketRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Ticket>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -588,7 +594,9 @@ public class TicketServiceTests
 
         Assert.NotNull(result);
         Assert.Null(result.AssignedToSupportId);
-        _ticketRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _ticketRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Ticket>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
