@@ -1,4 +1,5 @@
-﻿using HelpDesk.Domain.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using HelpDesk.Domain.Enums;
 
 namespace HelpDesk.Domain.Entities;
 
@@ -24,9 +25,8 @@ public class User
     public static User Create(string name, string email, string passwordHash,  UserRole role = UserRole.User)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(email);
         ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
-        return new User(name, email, passwordHash, role);
+        return new User(name.Trim(), NormalizeEmail(email), passwordHash, role);
     }
     public void UpdateName(string name)
     {
@@ -36,8 +36,7 @@ public class User
     }
     public void UpdateEmail(string email)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(email);
-        Email = email.Trim();
+        Email = NormalizeEmail(email);
         Touch();
     }
     public void UpdatePasswordHash(string passwordHash)
@@ -64,4 +63,19 @@ public class User
     }
 
     private void Touch() => UpdatedAt = DateTime.UtcNow;
+
+    private static string NormalizeEmail(string email)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+
+        string normalizedEmail = email.Trim();
+        if (!new EmailAddressAttribute().IsValid(normalizedEmail))
+        {
+            throw new ArgumentException(
+                "A valid email address is required.",
+                nameof(email));
+        }
+
+        return normalizedEmail;
+    }
 }

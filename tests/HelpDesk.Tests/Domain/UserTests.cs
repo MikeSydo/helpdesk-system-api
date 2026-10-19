@@ -9,7 +9,7 @@ public class UserTests
     public void CreateUser_WhenCalled_ShouldCreateUser()
     {
         string userName = Guid.NewGuid().ToString();
-        string userEmail = Guid.NewGuid().ToString();
+        string userEmail = $"{Guid.NewGuid():N}@example.com";
         string userPasswordHash = Guid.NewGuid().ToString();
         UserRole userRole = UserRole.User;
         
@@ -29,7 +29,7 @@ public class UserTests
     public void ChangeRole_WhenCalled_ShouldChangeRole()
     {
         string userName = Guid.NewGuid().ToString();
-        string userEmail = Guid.NewGuid().ToString();
+        string userEmail = $"{Guid.NewGuid():N}@example.com";
         string userPasswordHash = Guid.NewGuid().ToString();
         UserRole userRole = UserRole.User;
         

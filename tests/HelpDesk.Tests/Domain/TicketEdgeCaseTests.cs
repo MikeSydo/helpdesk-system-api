@@ -1,5 +1,6 @@
 using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
+// ReSharper disable ConvertToLocalFunction
 
 namespace HelpDesk.Tests.Domain;
 

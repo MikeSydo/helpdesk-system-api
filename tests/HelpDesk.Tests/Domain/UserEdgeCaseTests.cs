@@ -1,4 +1,5 @@
 using HelpDesk.Domain.Entities;
+// ReSharper disable ConvertToLocalFunction
 
 namespace HelpDesk.Tests.Domain;
 
@@ -40,6 +41,14 @@ public class UserEdgeCaseTests
     public void Create_WithWhitespaceEmail_ShouldThrowArgumentException()
     {
         Action act = () => User.Create("Name", "   ", "hash");
+
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    [Fact]
+    public void Create_WithInvalidEmail_ShouldThrowArgumentException()
+    {
+        Action act = () => User.Create("Name", "not-an-email", "hash");
 
         Assert.Throws<ArgumentException>(act);
     }
@@ -92,6 +101,16 @@ public class UserEdgeCaseTests
         User user = User.Create("Name", "email@example.com", "hash");
 
         Action act = () => user.UpdateEmail("   ");
+
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    [Fact]
+    public void UpdateEmail_WithInvalidEmail_ShouldThrowArgumentException()
+    {
+        User user = User.Create("Name", "email@example.com", "hash");
+
+        Action act = () => user.UpdateEmail("not-an-email");
 
         Assert.Throws<ArgumentException>(act);
     }
