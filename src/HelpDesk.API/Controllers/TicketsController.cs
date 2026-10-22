@@ -1,6 +1,5 @@
 ﻿using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Tickets.Dtos;
-using HelpDesk.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HelpDesk.API.Controllers;
@@ -60,29 +59,4 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
         return status ? NoContent() : NotFound(id);
     }
     
-    [HttpPatch("{id:guid}/status")]
-    public async Task<ActionResult<TicketResponse>> ChangeStatus(Guid id, [FromBody] TicketStatus newStatus,
-        CancellationToken cancellationToken)
-    {
-        // TODO: Require SupportOrAdmin authorization when authentication is implemented.
-        var result = await ticketsService.ChangeStatusAsync(id, newStatus, cancellationToken);
-        return result == null ? NotFound() : Ok(result);
-    }
-    
-    [HttpPatch("{id:guid}/assign/{supportUserId:guid}")]
-    public async Task<ActionResult<TicketResponse>> AssignSupport(Guid id, Guid supportUserId,
-        CancellationToken cancellationToken)
-    {
-        // TODO: Require SupportOrAdmin authorization when authentication is implemented.
-        var result = await ticketsService.AssignSupportAsync(id, supportUserId, cancellationToken);
-        return result == null ? NotFound() : Ok(result);
-    }
-
-    [HttpDelete("{id:guid}/assign")]
-    public async Task<ActionResult<TicketResponse>> UnassignSupport(Guid id, CancellationToken cancellationToken)
-    {
-        // TODO: Require SupportOrAdmin authorization when authentication is implemented.
-        var result = await ticketsService.UnassignSupportAsync(id, cancellationToken);
-        return result == null ? NotFound() : Ok(result);
-    }
 }

@@ -73,38 +73,6 @@ public sealed class TicketService(ITicketRepository ticketRepository, ICategoryR
         return true;
     }
     
-    public async Task<TicketResponse?> ChangeStatusAsync(Guid ticketId, TicketStatus newStatus, CancellationToken
-        cancellationToken)
-    {
-        var ticket = await ticketRepository.GetByIdAsync(ticketId, cancellationToken);
-        if (ticket == null) return null;
-
-        ticket.ChangeStatus(newStatus);
-        await ticketRepository.UpdateAsync(ticket, cancellationToken);
-        return MapToResponse(ticket);
-    }
-
-    public async Task<TicketResponse?> AssignSupportAsync(Guid ticketId, Guid supportUserId, CancellationToken
-        cancellationToken)
-    {
-        var ticket = await ticketRepository.GetByIdAsync(ticketId, cancellationToken);
-        if (ticket == null) return null;
-
-        ticket.AssignTo(supportUserId);
-        await ticketRepository.UpdateAsync(ticket, cancellationToken);
-        return MapToResponse(ticket);
-    }
-
-    public async Task<TicketResponse?> UnassignSupportAsync(Guid ticketId, CancellationToken cancellationToken)
-    {
-        var ticket = await ticketRepository.GetByIdAsync(ticketId, cancellationToken);
-        if (ticket == null) return null;
-
-        ticket.Unassign();
-        await ticketRepository.UpdateAsync(ticket, cancellationToken);
-        return MapToResponse(ticket);
-    }
-    
     private static TicketResponse MapToResponse(Ticket ticket)
     {
         return new TicketResponse(ticket.Id, ticket.Title, ticket.Description, ticket.Status, 

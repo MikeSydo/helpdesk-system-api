@@ -39,6 +39,19 @@ public class TicketsApiTests(CustomWebApplicationFactory factory) :
     }
 
     [Fact]
+    public async Task ChangeStatus_WhenTicketDoesNotExist_ShouldReturnNotFound()
+    {
+        Guid id = Guid.NewGuid();
+        ChangeTicketStatusRequest request = new(TicketStatus.InProgress);
+
+        HttpResponseMessage response = await _client.PatchAsJsonAsync(
+            $"/api/Tickets/{id}/status",
+            request);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Post_WithInvalidCategory_ShouldReturnServerError_ForNow()
     {
         CreateTicketRequest request = new(
