@@ -1,4 +1,5 @@
 ﻿using HelpDesk.Domain.Enums;
+using HelpDesk.Domain.Exceptions;
 
 namespace HelpDesk.Domain.Entities;
 
@@ -76,7 +77,8 @@ public class Ticket
 
         if (!isAllowed)
         {
-            throw new InvalidOperationException(
+            throw new DomainException(
+                "ticket.invalid_status_transition",
                 $"Ticket status cannot change from {Status} to {newStatus}.");
         }
 

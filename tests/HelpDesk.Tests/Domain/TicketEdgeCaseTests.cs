@@ -1,5 +1,6 @@
 using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
+using HelpDesk.Domain.Exceptions;
 // ReSharper disable ConvertToLocalFunction
 
 namespace HelpDesk.Tests.Domain;
@@ -184,7 +185,7 @@ public class TicketEdgeCaseTests
     }
 
     [Fact]
-    public void ChangeStatus_FromOpenToResolved_ShouldThrowInvalidOperationException()
+    public void ChangeStatus_FromOpenToResolved_ShouldThrowDomainException()
     {
         Ticket ticket = Ticket.Create(
             Guid.NewGuid(),
@@ -192,12 +193,16 @@ public class TicketEdgeCaseTests
             "Title",
             "Description");
 
-        Assert.Throws<InvalidOperationException>(() =>
+        DomainException exception = Assert.Throws<DomainException>(() =>
             ticket.ChangeStatus(TicketStatus.Resolved));
+
+        Assert.Equal("ticket.invalid_status_transition", exception.Code);
+        Assert.Contains("Open", exception.Message);
+        Assert.Contains("Resolved", exception.Message);
     }
 
     [Fact]
-    public void ChangeStatus_FromClosedToOpen_ShouldThrowInvalidOperationException()
+    public void ChangeStatus_FromClosedToOpen_ShouldThrowDomainException()
     {
         Ticket ticket = Ticket.Create(
             Guid.NewGuid(),
@@ -209,8 +214,10 @@ public class TicketEdgeCaseTests
         ticket.ChangeStatus(TicketStatus.Resolved);
         ticket.ChangeStatus(TicketStatus.Closed);
 
-        Assert.Throws<InvalidOperationException>(() =>
+        DomainException exception = Assert.Throws<DomainException>(() =>
             ticket.ChangeStatus(TicketStatus.Open));
+
+        Assert.Equal("ticket.invalid_status_transition", exception.Code);
     }
 
     [Fact]
