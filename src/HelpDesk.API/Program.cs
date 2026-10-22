@@ -1,11 +1,17 @@
 using HelpDesk.API;
+using HelpDesk.API.Security;
 using HelpDesk.Application.Categories;
 using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Users;
 using HelpDesk.Application.Auth;
 using HelpDesk.DataAccess;
 using HelpDesk.DataAccess.Repositories;
+using HelpDesk.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+
+using ApplicationPasswordHasher = HelpDesk.Application.Common.Interfaces.IPasswordHasher;
+using AspNetPasswordHasher = Microsoft.AspNetCore.Identity.IPasswordHasher<HelpDesk.Domain.Entities.User>;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -33,7 +39,11 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<AspNetPasswordHasher, PasswordHasher<User>>();
+builder.Services.AddScoped<ApplicationPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
