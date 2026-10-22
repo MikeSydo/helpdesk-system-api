@@ -9,4 +9,5 @@ public interface IUserManagementService
     Task<UserResponse?> ChangeRoleAsync(Guid id, ChangeRoleRequest request,
         CancellationToken cancellationToken = default);
     Task<bool> DeactivateAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAccountAsync(Guid id, CancellationToken cancellationToken = default);
 }

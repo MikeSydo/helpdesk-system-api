@@ -1,5 +1,6 @@
 using HelpDesk.Application.Users;
 using HelpDesk.Application.Users.Dtos;
+using HelpDesk.Application.Auth;
 using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
 using Moq;
@@ -9,11 +10,12 @@ namespace HelpDesk.Tests.Application;
 public class UserManagementServiceTests
 {
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
+    private readonly Mock<IRefreshTokenRepository> _refreshTokenRepositoryMock = new();
     private readonly UserManagementService _userManagementService;
 
     public UserManagementServiceTests()
     {
-        _userManagementService = new UserManagementService(_userRepositoryMock.Object);
+        _userManagementService = new UserManagementService(_userRepositoryMock.Object, _refreshTokenRepositoryMock.Object);
     }
 
     [Fact]

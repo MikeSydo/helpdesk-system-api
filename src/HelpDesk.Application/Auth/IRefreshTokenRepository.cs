@@ -8,6 +8,7 @@ public interface IRefreshTokenRepository
     Task<RefreshToken?> GetByHashAsync(string tokenHash, CancellationToken cancellationToken = default);
     Task RevokeAsync(Guid tokenId, string reason, CancellationToken cancellationToken = default);
     Task RevokeFamilyAsync(Guid tokenFamilyId, string reason, CancellationToken cancellationToken = default);
+    Task RevokeForUserAsync(Guid userId, string reason, CancellationToken cancellationToken = default);
     Task MarkAsReplacedAsync(Guid tokenId, Guid replacementTokenId, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

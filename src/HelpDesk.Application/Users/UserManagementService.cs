@@ -1,9 +1,12 @@
 using HelpDesk.Application.Users.Dtos;
+using HelpDesk.Application.Auth;
 using HelpDesk.Domain.Entities;
 
 namespace HelpDesk.Application.Users;
 
-public sealed class UserManagementService(IUserRepository userRepository) : IUserManagementService
+public sealed class UserManagementService(
+    IUserRepository userRepository,
+    IRefreshTokenRepository refreshTokenRepository) : IUserManagementService
 {
     public async Task<UserResponse?> GetByIdAsync(
         Guid id,
@@ -51,6 +54,26 @@ public sealed class UserManagementService(IUserRepository userRepository) : IUse
 
         user.Deactivate();
         await userRepository.UpdateAsync(user, cancellationToken);
+
+        return true;
+    }
+
+    public async Task<bool> DeleteAccountAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        User? user = await userRepository.GetByIdAsync(id, cancellationToken);
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.Deactivate();
+        await userRepository.UpdateAsync(user, cancellationToken);
+
+        await refreshTokenRepository.RevokeForUserAsync(
+            id,
+            "user_deactivated",
+            cancellationToken);
+        await refreshTokenRepository.SaveChangesAsync(cancellationToken);
 
         return true;
     }

@@ -4,6 +4,7 @@ using HelpDesk.Application.Categories;
 using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Users;
 using HelpDesk.Application.Auth;
+using HelpDesk.Application.Common.Interfaces;
 using HelpDesk.DataAccess;
 using HelpDesk.DataAccess.Repositories;
 using HelpDesk.Domain.Entities;
@@ -47,6 +48,8 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<AspNetPasswordHasher, PasswordHasher<User>>();
 builder.Services.AddScoped<ApplicationPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.Configure<JwtOptions>(
     configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();

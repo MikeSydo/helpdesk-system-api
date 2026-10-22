@@ -58,6 +58,25 @@ public sealed class RefreshTokenRepository(AppDbContext dbContext) : IRefreshTok
         }
     }
 
+    public async Task RevokeForUserAsync(Guid userId, string reason, CancellationToken cancellationToken = default)
+    {
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException("User is required.", nameof(userId));
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+
+        List<RefreshToken> tokens = await dbContext.RefreshTokens
+            .Where(token => token.UserId == userId)
+            .ToListAsync(cancellationToken);
+
+        foreach (RefreshToken token in tokens)
+        {
+            token.Revoke(reason);
+        }
+    }
+
     public async Task MarkAsReplacedAsync(Guid tokenId, Guid replacementTokenId, CancellationToken cancellationToken = default)
     {
         RefreshToken? refreshToken = await dbContext.RefreshTokens
