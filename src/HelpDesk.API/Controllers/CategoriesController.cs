@@ -1,6 +1,8 @@
 ﻿using HelpDesk.Application.Categories;
 using HelpDesk.Application.Categories.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using HelpDesk.API.Security;
 
 namespace HelpDesk.API.Controllers;
 
@@ -24,10 +26,10 @@ public class CategoriesController(ICategoryService categoryService) : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     public async Task<ActionResult<CategoryResponse>> CreateCategory([FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        // TODO: Require the AdminOnly policy when authentication is implemented.
         CategoryResponse category = await categoryService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(
             nameof(GetCategory),
@@ -36,19 +38,19 @@ public class CategoriesController(ICategoryService categoryService) : Controller
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     public async Task<ActionResult<CategoryResponse>> UpdateCategory(Guid id, [FromBody] UpdateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        // TODO: Require the AdminOnly policy when authentication is implemented.
         var category = await categoryService.UpdateAsync(id, request, cancellationToken);
         if  (category == null) return NotFound(id);
         return Ok(category);
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     public async Task<IActionResult> DeleteCategory(Guid id, CancellationToken cancellationToken)
     {
-        // TODO: Require the AdminOnly policy when authentication is implemented.
         var status = await categoryService.DeleteAsync(id, cancellationToken);
         return status ? NoContent() : NotFound(id);
     }

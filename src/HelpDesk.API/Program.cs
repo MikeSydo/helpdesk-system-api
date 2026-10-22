@@ -83,7 +83,12 @@ builder.Services
             ClockSkew = TimeSpan.Zero
         };
     });
-builder.Services.AddAuthorization();
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(AuthorizationPolicies.AdminOnly, policy =>
+        policy.RequireRole("Admin"))
+    .AddPolicy(AuthorizationPolicies.SupportOrAdmin, policy =>
+        policy.RequireRole("Support", "Admin"));
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -105,6 +110,7 @@ app.MapControllers();
 
 app.Run();
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public partial class Program
 {
 }

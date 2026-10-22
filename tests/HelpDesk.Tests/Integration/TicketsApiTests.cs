@@ -60,10 +60,8 @@ public class TicketsApiTests(CustomWebApplicationFactory factory) :
             Guid.NewGuid(),
             TicketPriority.High);
 
-        Guid currentUserId = Guid.NewGuid();
-
         HttpResponseMessage response = await _client.PostAsJsonAsync(
-            $"/api/Tickets?currentUserId={currentUserId}",
+            "/api/Tickets",
             request);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);

@@ -1,12 +1,19 @@
 ﻿using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Tickets.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using HelpDesk.API.Security;
+using HelpDesk.Application.Common.Exceptions;
+using HelpDesk.Application.Common.Interfaces;
 
 namespace HelpDesk.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TicketsController(ITicketService ticketsService) : ControllerBase
+[Authorize]
+public class TicketsController(
+    ITicketService ticketsService,
+    ICurrentUser currentUser) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<TicketResponse>>> GetTickets(CancellationToken cancellationToken)
@@ -24,12 +31,11 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TicketResponse>> CreateTicket([FromBody] CreateTicketRequest request, 
-        [FromQuery] Guid currentUserId, CancellationToken cancellationToken)
+    public async Task<ActionResult<TicketResponse>> CreateTicket(
+        [FromBody] CreateTicketRequest request,
+        CancellationToken cancellationToken)
     {
-        // TODO: Replace currentUserId with the authenticated user's claims via ICurrentUser.
-        if (currentUserId == Guid.Empty)
-            return BadRequest("currentUserId is required.");
+        Guid currentUserId = RequireUserId();
 
         TicketResponse ticket = await ticketsService.CreateAsync(request, currentUserId, cancellationToken);
 
@@ -40,12 +46,12 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<TicketResponse>> UpdateTicket(Guid id, [FromBody] UpdateTicketRequest request,
-        [FromQuery] Guid currentUserId, CancellationToken cancellationToken)
+    public async Task<ActionResult<TicketResponse>> UpdateTicket(
+        Guid id,
+        [FromBody] UpdateTicketRequest request,
+        CancellationToken cancellationToken)
     {
-        // TODO: Replace currentUserId with the authenticated user's claims via ICurrentUser.
-        if (currentUserId == Guid.Empty)
-            return BadRequest("currentUserId is required.");
+        Guid currentUserId = RequireUserId();
         var ticket = await ticketsService.UpdateAsync(id, request, currentUserId, cancellationToken);
         if (ticket == null) return NotFound(id);
         return Ok(ticket);
@@ -54,9 +60,19 @@ public class TicketsController(ITicketService ticketsService) : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<TicketResponse>> DeleteTicket(Guid id, CancellationToken cancellationToken)
     {
-        // TODO: Require ownership or Support/Admin authorization when authentication is implemented.
+        RequireUserId();
         bool status = await ticketsService.DeleteAsync(id, cancellationToken);
         return status ? NoContent() : NotFound(id);
+    }
+
+    private Guid RequireUserId()
+    {
+        if (!currentUser.IsAuthenticated || currentUser.UserId is null)
+        {
+            throw new UnauthorizedException("Authentication is required.");
+        }
+
+        return currentUser.UserId.Value;
     }
     
 }

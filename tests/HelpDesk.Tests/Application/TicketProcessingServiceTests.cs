@@ -1,5 +1,7 @@
 using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Tickets.Dtos;
+using HelpDesk.Application.Common.Exceptions;
+using HelpDesk.Application.Common.Interfaces;
 using HelpDesk.Application.Users;
 using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
@@ -11,13 +13,17 @@ public class TicketProcessingServiceTests
 {
     private readonly Mock<ITicketRepository> _ticketRepositoryMock = new();
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
+    private readonly Mock<ICurrentUser> _currentUserMock = new();
     private readonly TicketProcessingService _service;
 
     public TicketProcessingServiceTests()
     {
         _service = new TicketProcessingService(
             _ticketRepositoryMock.Object,
-            _userRepositoryMock.Object);
+            _userRepositoryMock.Object,
+            _currentUserMock.Object);
+        _currentUserMock.SetupGet(x => x.IsAuthenticated).Returns(true);
+        _currentUserMock.SetupGet(x => x.Role).Returns(UserRole.Support);
     }
 
     [Fact]
@@ -74,7 +80,11 @@ public class TicketProcessingServiceTests
             Guid.NewGuid(),
             "Title",
             "Description");
-        User user = User.Create("Support", "support@example.com", "hash");
+        User user = User.Create(
+            "Support",
+            "support@example.com",
+            "hash",
+            UserRole.Support);
 
         _ticketRepositoryMock
             .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
@@ -119,6 +129,76 @@ public class TicketProcessingServiceTests
 
         _ticketRepositoryMock.Verify(
             x => x.UpdateAsync(It.IsAny<Ticket>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task AssignSupportAsync_WhenTargetIsNotSupport_ShouldThrowForbidden()
+    {
+        Guid ticketId = Guid.NewGuid();
+        Guid targetUserId = Guid.NewGuid();
+        Ticket ticket = Ticket.Create(Guid.NewGuid(), Guid.NewGuid(), "Title", "Description");
+        User user = User.Create("User", "user@example.com", "hash", UserRole.User);
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ticket);
+        _userRepositoryMock
+            .Setup(x => x.GetByIdAsync(targetUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _service.AssignSupportAsync(
+                ticketId,
+                new AssignTicketRequest(targetUserId)));
+
+        _ticketRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Ticket>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task AssignSupportAsync_WhenTargetIsInactive_ShouldThrowForbidden()
+    {
+        Guid ticketId = Guid.NewGuid();
+        Guid targetUserId = Guid.NewGuid();
+        Ticket ticket = Ticket.Create(Guid.NewGuid(), Guid.NewGuid(), "Title", "Description");
+        User user = User.Create(
+            "Support",
+            "inactive-support@example.com",
+            "hash",
+            UserRole.Support);
+        user.Deactivate();
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ticket);
+        _userRepositoryMock
+            .Setup(x => x.GetByIdAsync(targetUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _service.AssignSupportAsync(
+                ticketId,
+                new AssignTicketRequest(targetUserId)));
+
+        _ticketRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Ticket>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_WhenCallerIsRegularUser_ShouldThrowForbidden()
+    {
+        _currentUserMock.SetupGet(x => x.Role).Returns(UserRole.User);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _service.ChangeStatusAsync(
+                Guid.NewGuid(),
+                new ChangeTicketStatusRequest(TicketStatus.InProgress)));
+
+        _ticketRepositoryMock.Verify(
+            x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

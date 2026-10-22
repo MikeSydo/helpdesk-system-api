@@ -1,6 +1,8 @@
 using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Tickets.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using HelpDesk.API.Security;
 
 namespace HelpDesk.API.Controllers;
 
@@ -9,12 +11,12 @@ namespace HelpDesk.API.Controllers;
 public sealed class TicketProcessingController(ITicketProcessingService processingService) : ControllerBase
 {
     [HttpPatch("{id:guid}/status")]
+    [Authorize(Policy = AuthorizationPolicies.SupportOrAdmin)]
     public async Task<ActionResult<TicketResponse>> ChangeStatus(
         Guid id,
         [FromBody] ChangeTicketStatusRequest request,
         CancellationToken cancellationToken)
     {
-        // TODO: Require SupportOrAdmin authorization when authentication is implemented.
         TicketResponse? result = await processingService.ChangeStatusAsync(
             id,
             request,
@@ -23,12 +25,12 @@ public sealed class TicketProcessingController(ITicketProcessingService processi
     }
 
     [HttpPatch("{id:guid}/assign")]
+    [Authorize(Policy = AuthorizationPolicies.SupportOrAdmin)]
     public async Task<ActionResult<TicketResponse>> AssignSupport(
         Guid id,
         [FromBody] AssignTicketRequest request,
         CancellationToken cancellationToken)
     {
-        // TODO: Require SupportOrAdmin authorization when authentication is implemented.
         TicketResponse? result = await processingService.AssignSupportAsync(
             id,
             request,
@@ -37,11 +39,11 @@ public sealed class TicketProcessingController(ITicketProcessingService processi
     }
 
     [HttpDelete("{id:guid}/assign")]
+    [Authorize(Policy = AuthorizationPolicies.SupportOrAdmin)]
     public async Task<ActionResult<TicketResponse>> UnassignSupport(
         Guid id,
         CancellationToken cancellationToken)
     {
-        // TODO: Require SupportOrAdmin authorization when authentication is implemented.
         TicketResponse? result = await processingService.UnassignSupportAsync(
             id,
             cancellationToken);

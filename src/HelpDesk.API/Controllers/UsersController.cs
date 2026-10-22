@@ -1,11 +1,14 @@
 using HelpDesk.Application.Users;
 using HelpDesk.Application.Users.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using HelpDesk.API.Security;
 
 namespace HelpDesk.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = AuthorizationPolicies.AdminOnly)]
 public class UsersController(IUserManagementService userManagementService) : ControllerBase
 {
     [HttpGet]

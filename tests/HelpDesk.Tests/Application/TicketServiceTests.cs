@@ -1,6 +1,7 @@
 using HelpDesk.Application.Categories;
 using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Tickets.Dtos;
+using HelpDesk.Application.Common.Exceptions;
 using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
 using Moq;
@@ -419,7 +420,7 @@ public class TicketServiceTests
             .Setup(x => x.GetByIdAsync(ticketId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ticket);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             _ticketService.UpdateAsync(ticketId, request, anotherUserId));
     }
 
