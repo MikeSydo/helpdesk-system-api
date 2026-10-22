@@ -177,5 +177,6 @@ public class AuthServiceTests
             user,
             "access-token",
             "refresh-token",
+            Guid.NewGuid(),
             DateTime.UtcNow.AddMinutes(15));
 }

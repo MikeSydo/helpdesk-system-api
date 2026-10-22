@@ -58,6 +58,19 @@ public sealed class RefreshTokenRepository(AppDbContext dbContext) : IRefreshTok
         }
     }
 
+    public async Task MarkAsReplacedAsync(Guid tokenId, Guid replacementTokenId, CancellationToken cancellationToken = default)
+    {
+        RefreshToken? refreshToken = await dbContext.RefreshTokens
+            .FirstOrDefaultAsync(token => token.Id == tokenId, cancellationToken);
+
+        if (refreshToken is null)
+        {
+            throw new KeyNotFoundException("Refresh token was not found.");
+        }
+
+        refreshToken.MarkAsReplaced(replacementTokenId);
+    }
+
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return dbContext.SaveChangesAsync(cancellationToken);
