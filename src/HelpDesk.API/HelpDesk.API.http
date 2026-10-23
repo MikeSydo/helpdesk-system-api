@@ -1,6 +1,213 @@
 @HelpDesk.API_HostAddress = http://localhost:5134
+@accessToken = paste-access-token-here
+@refreshToken = paste-refresh-token-here
+@categoryId = 00000000-0000-0000-0000-000000000000
+@ticketId = 00000000-0000-0000-0000-000000000000
+@userId = 00000000-0000-0000-0000-000000000000
 
-GET {{HelpDesk.API_HostAddress}}/weatherforecast/
+### Authentication
+
+### Register a user
+POST {{HelpDesk.API_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "password": "Password1",
+  "confirmPassword": "Password1"
+}
+
+###
+
+### Login
+POST {{HelpDesk.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jane.doe@example.com",
+  "password": "Password1"
+}
+
+###
+
+### Refresh the access token
+POST {{HelpDesk.API_HostAddress}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+
+### Logout
+POST {{HelpDesk.API_HostAddress}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+
+### Delete the current account (soft delete)
+DELETE {{HelpDesk.API_HostAddress}}/api/auth/account
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Categories
+
+### List categories
+GET {{HelpDesk.API_HostAddress}}/api/categories
 Accept: application/json
 
 ###
+
+### Get a category
+GET {{HelpDesk.API_HostAddress}}/api/categories/{{categoryId}}
+Accept: application/json
+
+###
+
+### Create a category (Admin)
+POST {{HelpDesk.API_HostAddress}}/api/categories
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Network",
+  "description": "Network and connectivity issues"
+}
+
+###
+
+### Update a category (Admin)
+PUT {{HelpDesk.API_HostAddress}}/api/categories/{{categoryId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Networking",
+  "description": "Network and connectivity issues"
+}
+
+###
+
+### Delete a category without tickets (Admin)
+DELETE {{HelpDesk.API_HostAddress}}/api/categories/{{categoryId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Tickets
+
+### List accessible tickets
+GET {{HelpDesk.API_HostAddress}}/api/tickets
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+
+### Get a ticket
+GET {{HelpDesk.API_HostAddress}}/api/tickets/{{ticketId}}
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+
+### Create a ticket
+POST {{HelpDesk.API_HostAddress}}/api/tickets
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "VPN connection issue",
+  "description": "The VPN client cannot establish a connection.",
+  "categoryId": "{{categoryId}}",
+  "priority": "High"
+}
+
+###
+
+### Update an owned ticket
+PUT {{HelpDesk.API_HostAddress}}/api/tickets/{{ticketId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "VPN connection issue",
+  "description": "The VPN client still cannot establish a connection.",
+  "categoryId": "{{categoryId}}",
+  "priority": "High"
+}
+
+###
+
+### Delete an accessible ticket
+DELETE {{HelpDesk.API_HostAddress}}/api/tickets/{{ticketId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Ticket processing (Support or Admin)
+
+### Change ticket status
+PATCH {{HelpDesk.API_HostAddress}}/api/tickets/{{ticketId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "InProgress"
+}
+
+###
+
+### Assign an active Support user
+PATCH {{HelpDesk.API_HostAddress}}/api/tickets/{{ticketId}}/assign
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "supportUserId": "{{userId}}"
+}
+
+###
+
+### Unassign a ticket
+DELETE {{HelpDesk.API_HostAddress}}/api/tickets/{{ticketId}}/assign
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Users (Admin)
+
+### List users
+GET {{HelpDesk.API_HostAddress}}/api/users
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+
+### Get a user
+GET {{HelpDesk.API_HostAddress}}/api/users/{{userId}}
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+
+### Change a user's role
+PATCH {{HelpDesk.API_HostAddress}}/api/users/{{userId}}/role
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "role": "Support"
+}
+
+###
+
+### Deactivate a user
+DELETE {{HelpDesk.API_HostAddress}}/api/users/{{userId}}
+Authorization: Bearer {{accessToken}}
