@@ -90,6 +90,37 @@ public sealed class RefreshTokenRepository(AppDbContext dbContext) : IRefreshTok
         refreshToken.MarkAsReplaced(replacementTokenId);
     }
 
+    public async Task<bool> RotateAsync(
+        string tokenHash,
+        RefreshToken replacementToken,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(tokenHash);
+        ArgumentNullException.ThrowIfNull(replacementToken);
+
+        await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
+            await dbContext.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.Serializable,
+                cancellationToken);
+
+        RefreshToken? currentToken = await dbContext.RefreshTokens
+            .FirstOrDefaultAsync(
+                token => token.TokenHash == tokenHash.Trim(),
+                cancellationToken);
+
+        if (currentToken is null || !currentToken.IsActive)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return false;
+        }
+
+        currentToken.MarkAsReplaced(replacementToken.Id);
+        await dbContext.RefreshTokens.AddAsync(replacementToken, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return true;
+    }
+
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return dbContext.SaveChangesAsync(cancellationToken);

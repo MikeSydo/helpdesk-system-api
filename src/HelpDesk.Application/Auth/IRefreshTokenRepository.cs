@@ -10,5 +10,6 @@ public interface IRefreshTokenRepository
     Task RevokeFamilyAsync(Guid tokenFamilyId, string reason, CancellationToken cancellationToken = default);
     Task RevokeForUserAsync(Guid userId, string reason, CancellationToken cancellationToken = default);
     Task MarkAsReplacedAsync(Guid tokenId, Guid replacementTokenId, CancellationToken cancellationToken = default);
+    Task<bool> RotateAsync(string tokenHash, RefreshToken replacementToken, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

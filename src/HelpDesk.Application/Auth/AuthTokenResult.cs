@@ -7,4 +7,5 @@ public sealed record AuthTokenResult(
     string AccessToken,
     string RefreshToken,
     Guid RefreshTokenId,
-    DateTime AccessTokenExpiresAt);
+    DateTime AccessTokenExpiresAt,
+    RefreshToken? StoredRefreshToken = null);

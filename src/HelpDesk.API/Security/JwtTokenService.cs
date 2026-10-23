@@ -23,28 +23,12 @@ public sealed class JwtTokenService(
         ArgumentNullException.ThrowIfNull(user);
         ValidateOptions();
 
-        DateTime now = DateTime.UtcNow;
-        DateTime accessTokenExpiresAt = now.AddMinutes(_options.AccessTokenMinutes);
-        string accessToken = CreateAccessToken(user, now, accessTokenExpiresAt);
-        string rawRefreshToken = CreateRawRefreshToken();
-        DateTime refreshTokenExpiresAt = now.AddDays(_options.RefreshTokenDays);
+        AuthTokenResult result = CreateTokenResult(user);
 
-        RefreshToken refreshToken = RefreshToken.Create(
-            user.Id,
-            HashRefreshToken(rawRefreshToken),
-            Guid.NewGuid(),
-            refreshTokenExpiresAt,
-            now);
-
-        await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
+        await refreshTokenRepository.AddAsync(result.StoredRefreshToken!, cancellationToken);
         await refreshTokenRepository.SaveChangesAsync(cancellationToken);
 
-        return new AuthTokenResult(
-            user,
-            accessToken,
-            rawRefreshToken,
-            refreshToken.Id,
-            accessTokenExpiresAt);
+        return result;
     }
 
     public async Task<AuthTokenResult> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default)
@@ -80,12 +64,21 @@ public sealed class JwtTokenService(
             throw new UnauthorizedException("Invalid refresh token.");
         }
 
-        AuthTokenResult replacement = await IssueAsync(user, cancellationToken);
-        await refreshTokenRepository.MarkAsReplacedAsync(
-            storedToken.Id,
-            replacement.RefreshTokenId,
+        AuthTokenResult replacement = CreateTokenResult(user);
+        bool rotated = await refreshTokenRepository.RotateAsync(
+            HashRefreshToken(refreshToken),
+            replacement.StoredRefreshToken!,
             cancellationToken);
-        await refreshTokenRepository.SaveChangesAsync(cancellationToken);
+
+        if (!rotated)
+        {
+            await refreshTokenRepository.RevokeFamilyAsync(
+                storedToken.TokenFamilyId,
+                "reuse_detected",
+                cancellationToken);
+            await refreshTokenRepository.SaveChangesAsync(cancellationToken);
+            throw new UnauthorizedException("Invalid refresh token.");
+        }
 
         return replacement;
     }
@@ -134,6 +127,28 @@ public sealed class JwtTokenService(
             credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private AuthTokenResult CreateTokenResult(User user)
+    {
+        DateTime now = DateTime.UtcNow;
+        DateTime accessTokenExpiresAt = now.AddMinutes(_options.AccessTokenMinutes);
+        string accessToken = CreateAccessToken(user, now, accessTokenExpiresAt);
+        string rawRefreshToken = CreateRawRefreshToken();
+        RefreshToken refreshToken = RefreshToken.Create(
+            user.Id,
+            HashRefreshToken(rawRefreshToken),
+            Guid.NewGuid(),
+            now.AddDays(_options.RefreshTokenDays),
+            now);
+
+        return new AuthTokenResult(
+            user,
+            accessToken,
+            rawRefreshToken,
+            refreshToken.Id,
+            accessTokenExpiresAt,
+            refreshToken);
     }
 
     private static string CreateRawRefreshToken() => 
