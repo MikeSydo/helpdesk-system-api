@@ -11,6 +11,7 @@ using HelpDesk.API.Security;
 
 namespace HelpDesk.Tests.Integration;
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public sealed class JwtAuthWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -32,7 +33,7 @@ public sealed class JwtAuthWebApplicationFactory : WebApplicationFactory<Program
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IOptions<JwtOptions>>();
-            services.AddSingleton<IOptions<JwtOptions>>(
+            services.AddSingleton(
                 Options.Create(new JwtOptions
                 {
                     Issuer = "HelpDesk.Api.Tests",

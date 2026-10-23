@@ -20,6 +20,8 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+await app.ApplyDatabaseInitializationAsync();
+
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())

@@ -23,7 +23,7 @@ public sealed class AuthFlowApiTests(JwtAuthWebApplicationFactory factory) :
             "/api/auth/register",
             registration);
         Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
-        AuthResponse registered = await ReadAuthResponse(registerResponse);
+        await ReadAuthResponse(registerResponse);
 
         HttpResponseMessage loginResponse = await client.PostAsJsonAsync(
             "/api/auth/login",

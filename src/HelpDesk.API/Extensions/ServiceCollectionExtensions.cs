@@ -11,8 +11,6 @@ using HelpDesk.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
 using ApplicationPasswordHasher = HelpDesk.Application.Common.Interfaces.IPasswordHasher;
