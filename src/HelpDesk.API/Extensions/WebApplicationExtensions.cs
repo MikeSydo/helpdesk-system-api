@@ -23,7 +23,14 @@ public static class WebApplicationExtensions
                 scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
             await dbContext.Database.MigrateAsync(cancellationToken);
-            await DbSeeder.SeedAsync(dbContext, passwordHasher, cancellationToken);
+
+            bool shouldSeed = application.Environment.IsDevelopment() &&
+                application.Configuration.GetValue<bool>("DatabaseInitialization:Seed");
+
+            if (shouldSeed)
+            {
+                await DbSeeder.SeedAsync(dbContext, passwordHasher, cancellationToken);
+            }
         }
         finally
         {
