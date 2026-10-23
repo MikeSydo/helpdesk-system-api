@@ -38,7 +38,7 @@ The API uses PostgreSQL through Entity Framework Core, JWT bearer authentication
 Start PostgreSQL:
 
 ```powershell
-docker compose up -d
+docker compose up -d postgres
 ```
 
 Configure the database connection and JWT signing key through User Secrets or environment variables. Do not commit secrets to `appsettings.json`, `.env`, or source control.
@@ -73,6 +73,21 @@ Run the API:
 ```powershell
 dotnet run --project src\HelpDesk.API\HelpDesk.API.csproj
 ```
+
+When started locally with the `Development` environment, pending migrations run
+and the idempotent seed is enabled.
+
+Run the API and PostgreSQL with Docker Compose:
+
+```powershell
+Copy-Item .env.example .env
+# Set JWT_SIGNING_KEY in .env to a value with at least 32 characters.
+docker compose up --build
+```
+
+The containerized API listens on `http://localhost:8080`. Docker Compose uses the
+`Production` environment, so migrations run automatically but development seed
+data is not created.
 
 Swagger is available at `/swagger` in Development.
 
