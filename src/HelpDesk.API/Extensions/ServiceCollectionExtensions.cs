@@ -14,8 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using ApplicationPasswordHasher = HelpDesk.Application.Common.Interfaces.IPasswordHasher;
-using AspNetPasswordHasher =
-    Microsoft.AspNetCore.Identity.IPasswordHasher<HelpDesk.Domain.Entities.User>;
+using AspNetPasswordHasher = Microsoft.AspNetCore.Identity.IPasswordHasher<HelpDesk.Domain.Entities.User>;
 
 namespace HelpDesk.API.Extensions;
 
@@ -41,8 +40,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
 
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IOneTimeTokenRepository, OneTimeTokenRepository>();
         services.AddScoped<AspNetPasswordHasher, PasswordHasher<User>>();
         services.AddScoped<ApplicationPasswordHasher, PasswordHasher>();
+        services.AddSingleton(
+            configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>()
+            ?? new EmailOptions());
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();

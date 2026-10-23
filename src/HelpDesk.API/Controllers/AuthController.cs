@@ -17,12 +17,33 @@ public sealed class AuthController(
 {
     [AllowAnonymous]
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponse>> Register(
+    public async Task<ActionResult<PendingRegistrationResponse>> Register(
         RegisterRequest request,
         CancellationToken cancellationToken)
     {
-        AuthResponse response = await authService.RegisterAsync(request, cancellationToken);
+        PendingRegistrationResponse response =
+            await authService.RegisterAsync(request, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, response);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail(
+        ConfirmEmailRequest request,
+        CancellationToken cancellationToken)
+    {
+        await authService.ConfirmEmailAsync(request, cancellationToken);
+        return NoContent();
+    }
+
+    [AllowAnonymous]
+    [HttpPost("resend-confirmation")]
+    public async Task<IActionResult> ResendConfirmation(
+        ResendConfirmationRequest request,
+        CancellationToken cancellationToken)
+    {
+        await authService.ResendConfirmationAsync(request, cancellationToken);
+        return Ok(new { Message = "If the account exists, an email has been sent." });
     }
 
     [AllowAnonymous]
@@ -50,6 +71,44 @@ public sealed class AuthController(
         CancellationToken cancellationToken)
     {
         await authService.LogoutAsync(request, cancellationToken);
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!currentUser.IsAuthenticated || currentUser.UserId is null)
+        {
+            throw new UnauthorizedException("Authentication is required.");
+        }
+
+        await authService.ChangePasswordAsync(
+            currentUser.UserId.Value,
+            request,
+            cancellationToken);
+        return NoContent();
+    }
+
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(
+        ForgotPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        await authService.ForgotPasswordAsync(request, cancellationToken);
+        return Ok(new { Message = "If the account exists, an email has been sent." });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(
+        ResetPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        await authService.ResetPasswordAsync(request, cancellationToken);
         return NoContent();
     }
 

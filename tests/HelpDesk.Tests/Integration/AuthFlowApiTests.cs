@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using HelpDesk.Application.Auth.Dtos;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HelpDesk.Tests.Integration;
 
@@ -23,7 +24,24 @@ public sealed class AuthFlowApiTests(JwtAuthWebApplicationFactory factory) :
             "/api/auth/register",
             registration);
         Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
-        await ReadAuthResponse(registerResponse);
+        PendingRegistrationResponse? pending =
+            await registerResponse.Content.ReadFromJsonAsync<PendingRegistrationResponse>();
+        Assert.NotNull(pending);
+
+        TestEmailSender emailSender = factory.Services.GetRequiredService<TestEmailSender>();
+        Assert.NotNull(emailSender.LastBody);
+        int tokenStart = emailSender.LastBody!.LastIndexOf("?token=", StringComparison.Ordinal);
+        Assert.True(tokenStart >= 0);
+        string confirmationToken = Uri.UnescapeDataString(
+            emailSender.LastBody[(tokenStart + "?token=".Length)..]);
+
+        HttpResponseMessage confirmationResponse = await client.PostAsJsonAsync(
+            "/api/auth/confirm-email",
+            new ConfirmEmailRequest(confirmationToken));
+        string confirmationError = await confirmationResponse.Content.ReadAsStringAsync();
+        Assert.True(
+            confirmationResponse.StatusCode == HttpStatusCode.NoContent,
+            confirmationError);
 
         HttpResponseMessage loginResponse = await client.PostAsJsonAsync(
             "/api/auth/login",

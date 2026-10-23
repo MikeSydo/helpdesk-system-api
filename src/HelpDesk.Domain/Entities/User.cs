@@ -11,6 +11,7 @@ public class User
     public string PasswordHash { get; private set; }
     public UserRole  Role { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public bool EmailConfirmed { get; private set; }
     public DateTime CreatedAt { get; private set; } =  DateTime.UtcNow;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
@@ -43,6 +44,17 @@ public class User
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
         PasswordHash = passwordHash;
+        Touch();
+    }
+
+    public void ConfirmEmail()
+    {
+        if (EmailConfirmed)
+        {
+            return;
+        }
+
+        EmailConfirmed = true;
         Touch();
     }
     public void ChangeRole(UserRole role)

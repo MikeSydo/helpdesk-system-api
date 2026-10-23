@@ -59,7 +59,7 @@ public sealed class JwtTokenService(
             storedToken.UserId,
             cancellationToken);
 
-        if (user is null || !user.IsActive)
+        if (user is null || !user.IsActive || !user.EmailConfirmed)
         {
             throw new UnauthorizedException("Invalid refresh token.");
         }

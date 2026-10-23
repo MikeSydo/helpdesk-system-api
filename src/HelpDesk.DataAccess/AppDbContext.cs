@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Category> Categories { get; set; }
     public DbSet<TicketComment> Comments { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<OneTimeToken> OneTimeTokens { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

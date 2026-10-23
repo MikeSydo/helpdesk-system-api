@@ -14,6 +14,9 @@ public class AuthServiceTests
     private readonly Mock<IUserRepository> _userRepository = new();
     private readonly Mock<IPasswordHasher> _passwordHasher = new();
     private readonly Mock<IJwtTokenService> _jwtTokenService = new();
+    private readonly Mock<IOneTimeTokenRepository> _oneTimeTokenRepository = new();
+    private readonly Mock<IRefreshTokenRepository> _refreshTokenRepository = new();
+    private readonly Mock<IEmailSender> _emailSender = new();
     private readonly AuthService _service;
 
     public AuthServiceTests()
@@ -21,11 +24,19 @@ public class AuthServiceTests
         _service = new AuthService(
             _userRepository.Object,
             _passwordHasher.Object,
-            _jwtTokenService.Object);
+            _jwtTokenService.Object,
+            _oneTimeTokenRepository.Object,
+            _refreshTokenRepository.Object,
+            _emailSender.Object,
+            new EmailOptions
+            {
+                ConfirmationLinkBaseUrl = "https://example.test/confirm",
+                PasswordResetLinkBaseUrl = "https://example.test/reset"
+            });
     }
 
     [Fact]
-    public async Task RegisterAsync_ShouldCreateUserWithDefaultRoleAndIssueTokens()
+    public async Task RegisterAsync_ShouldCreateUnconfirmedUserWithoutTokens()
     {
         const string password = "Password1";
         const string passwordHash = "hashed-password";
@@ -43,17 +54,22 @@ public class AuthServiceTests
         _passwordHasher
             .Setup(x => x.Hash(It.IsAny<User>(), password))
             .Returns(passwordHash);
-        _jwtTokenService
-            .Setup(x => x.IssueAsync(
-                It.IsAny<User>(),
+        _emailSender
+            .Setup(x => x.SendAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((User user, CancellationToken _) => CreateTokens(user));
+            .Returns(Task.CompletedTask);
 
-        AuthResponse result = await _service.RegisterAsync(request);
+        PendingRegistrationResponse result = await _service.RegisterAsync(request);
 
         Assert.Equal("new@example.com", result.Email);
-        Assert.Equal(nameof(UserRole.User), result.Role);
+        Assert.False(GetAddedUser().EmailConfirmed);
         Assert.Equal(passwordHash, GetAddedUser().PasswordHash);
+        _jwtTokenService.Verify(
+            x => x.IssueAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()),
+            Times.Never);
         _userRepository.Verify(
             x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -88,6 +104,7 @@ public class AuthServiceTests
     public async Task LoginAsync_WithValidCredentials_ShouldIssueTokens()
     {
         User user = User.Create("User", "user@example.com", "stored-hash");
+        user.ConfirmEmail();
         _userRepository
             .Setup(x => x.GetUserByEmailAsync(
                 user.Email,
@@ -148,6 +165,87 @@ public class AuthServiceTests
                 It.IsAny<string>(),
                 It.IsAny<string>()),
             Times.Never);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WhenEmailIsNotConfirmed_ShouldRejectCredentials()
+    {
+        User user = User.Create("User", "unconfirmed@example.com", "stored-hash");
+        _userRepository
+            .Setup(x => x.GetUserByEmailAsync(
+                user.Email,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        await Assert.ThrowsAsync<UnauthorizedException>(() =>
+            _service.LoginAsync(new LoginRequest(user.Email, "Password1")));
+
+        _jwtTokenService.Verify(
+            x => x.IssueAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfirmEmailAsync_ShouldConfirmUserAndConsumeToken()
+    {
+        User user = User.Create("User", "confirm@example.com", "stored-hash");
+        OneTimeToken token = OneTimeToken.Create(
+            user.Id,
+            OneTimeTokenType.EmailConfirmation,
+            "hashed-token",
+            DateTime.UtcNow.AddHours(1));
+        _oneTimeTokenRepository
+            .Setup(x => x.GetActiveAsync(
+                It.IsAny<string>(),
+                OneTimeTokenType.EmailConfirmation,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+        _userRepository
+            .Setup(x => x.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        await _service.ConfirmEmailAsync(new ConfirmEmailRequest("raw-token"));
+
+        Assert.True(user.EmailConfirmed);
+        Assert.False(token.IsActive);
+        _userRepository.Verify(
+            x => x.UpdateAsync(user, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_ShouldUpdateHashAndRevokeRefreshTokens()
+    {
+        User user = User.Create("User", "reset@example.com", "old-hash");
+        user.ConfirmEmail();
+        OneTimeToken token = OneTimeToken.Create(
+            user.Id,
+            OneTimeTokenType.PasswordReset,
+            "hashed-token",
+            DateTime.UtcNow.AddHours(1));
+        _oneTimeTokenRepository
+            .Setup(x => x.GetActiveAsync(
+                It.IsAny<string>(),
+                OneTimeTokenType.PasswordReset,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(token);
+        _userRepository
+            .Setup(x => x.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        _passwordHasher
+            .Setup(x => x.Hash(user, "NewPassword1"))
+            .Returns("new-hash");
+
+        await _service.ResetPasswordAsync(
+            new ResetPasswordRequest("raw-token", "NewPassword1", "NewPassword1"));
+
+        Assert.Equal("new-hash", user.PasswordHash);
+        _refreshTokenRepository.Verify(
+            x => x.RevokeForUserAsync(
+                user.Id,
+                "password_reset",
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

@@ -152,11 +152,13 @@ public static class DbSeeder
 
         if (user is not null)
         {
+            user.ConfirmEmail();
             return user;
         }
 
         user = User.Create(name, email, "seed-password", role);
         user.UpdatePasswordHash(passwordHasher.Hash(user, DefaultPassword));
+        user.ConfirmEmail();
         await dbContext.Users.AddAsync(user, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         return user;

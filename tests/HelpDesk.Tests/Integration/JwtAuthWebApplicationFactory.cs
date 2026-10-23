@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using HelpDesk.API.Security;
+using HelpDesk.Application.Common.Interfaces;
 
 namespace HelpDesk.Tests.Integration;
 
@@ -27,6 +28,9 @@ public sealed class JwtAuthWebApplicationFactory : WebApplicationFactory<Program
                 ["Jwt:SigningKey"] = signingKey,
                 ["Jwt:AccessTokenMinutes"] = "15",
                 ["Jwt:RefreshTokenDays"] = "30"
+                ,
+                ["Email:ConfirmationLinkBaseUrl"] = "https://test.local/confirm",
+                ["Email:PasswordResetLinkBaseUrl"] = "https://test.local/reset"
             });
         });
 
@@ -60,6 +64,26 @@ public sealed class JwtAuthWebApplicationFactory : WebApplicationFactory<Program
                     ClockSkew = TimeSpan.Zero
                 };
             });
+
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<TestEmailSender>();
+            services.AddSingleton<IEmailSender>(provider =>
+                provider.GetRequiredService<TestEmailSender>());
         });
+    }
+}
+
+public sealed class TestEmailSender : IEmailSender
+{
+    public string? LastBody { get; private set; }
+
+    public Task SendAsync(
+        string recipient,
+        string subject,
+        string body,
+        CancellationToken cancellationToken = default)
+    {
+        LastBody = body;
+        return Task.CompletedTask;
     }
 }

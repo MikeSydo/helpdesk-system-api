@@ -1,6 +1,8 @@
 @HelpDesk.API_HostAddress = http://localhost:5134
 @accessToken = paste-access-token-here
 @refreshToken = paste-refresh-token-here
+@emailConfirmationToken = paste-email-confirmation-token-here
+@passwordResetToken = paste-password-reset-token-here
 @categoryId = 00000000-0000-0000-0000-000000000000
 @ticketId = 00000000-0000-0000-0000-000000000000
 @userId = 00000000-0000-0000-0000-000000000000
@@ -16,6 +18,26 @@ Content-Type: application/json
   "email": "jane.doe@example.com",
   "password": "Password1",
   "confirmPassword": "Password1"
+}
+
+###
+
+### Confirm email
+POST {{HelpDesk.API_HostAddress}}/api/auth/confirm-email
+Content-Type: application/json
+
+{
+  "token": "{{emailConfirmationToken}}"
+}
+
+###
+
+### Resend email confirmation
+POST {{HelpDesk.API_HostAddress}}/api/auth/resend-confirmation
+Content-Type: application/json
+
+{
+  "email": "jane.doe@example.com"
 }
 
 ###
@@ -47,6 +69,41 @@ Content-Type: application/json
 
 {
   "refreshToken": "{{refreshToken}}"
+}
+
+###
+
+### Change password
+POST {{HelpDesk.API_HostAddress}}/api/auth/change-password
+Authorization: ******
+Content-Type: application/json
+
+{
+  "currentPassword": "Password1",
+  "newPassword": "NewPassword1",
+  "confirmPassword": "NewPassword1"
+}
+
+###
+
+### Request password reset
+POST {{HelpDesk.API_HostAddress}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "jane.doe@example.com"
+}
+
+###
+
+### Reset password
+POST {{HelpDesk.API_HostAddress}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "{{passwordResetToken}}",
+  "newPassword": "NewPassword1",
+  "confirmPassword": "NewPassword1"
 }
 
 ###

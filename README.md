@@ -54,6 +54,25 @@ dotnet user-secrets set "Jwt:SigningKey" $key `
   --project src\HelpDesk.API\HelpDesk.API.csproj
 ```
 
+Email confirmation and password recovery use SMTP. The application reads these
+settings through normal .NET configuration; do not read or commit `.env`.
+Before using registration or password recovery, enter your own values manually:
+
+```powershell
+dotnet user-secrets set "Email:Smtp:Host" "<smtp-host>" `
+  --project src\HelpDesk.API\HelpDesk.API.csproj
+dotnet user-secrets set "Email:Smtp:Port" "<smtp-port>" `
+  --project src\HelpDesk.API\HelpDesk.API.csproj
+dotnet user-secrets set "Email:Smtp:Username" "<smtp-username>" `
+  --project src\HelpDesk.API\HelpDesk.API.csproj
+dotnet user-secrets set "Email:Smtp:Password" "<your-smtp-password>" `
+  --project src\HelpDesk.API\HelpDesk.API.csproj
+dotnet user-secrets set "Email:Smtp:FromAddress" "<sender-email>" `
+  --project src\HelpDesk.API\HelpDesk.API.csproj
+```
+
+The real SMTP values are intentionally not included in this repository.
+
 Apply migrations:
 
 ```powershell
@@ -115,6 +134,20 @@ Executable HTTP examples for all currently implemented API operations are mainta
 [`src/HelpDesk.API/HelpDesk.API.http`](src/HelpDesk.API/HelpDesk.API.http)
 
 The request collection covers registration, login, refresh, logout, soft account deletion, tickets, ticket processing, categories, and administrative user management.
+
+Registration returns a pending response and does not issue JWTs until the
+email is confirmed. Authentication endpoints for this flow are:
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /api/auth/confirm-email` | Consume the confirmation token |
+| `POST /api/auth/resend-confirmation` | Resend confirmation without revealing account existence |
+| `POST /api/auth/change-password` | Change password for the current authenticated user |
+| `POST /api/auth/forgot-password` | Request a password reset email |
+| `POST /api/auth/reset-password` | Consume a reset token and set a new password |
+
+Login and refresh reject unconfirmed users. Password changes and password
+resets revoke all refresh tokens for the user.
 
 ## Authorization
 
