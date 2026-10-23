@@ -2,6 +2,7 @@ using HelpDesk.Application.Categories;
 using HelpDesk.Application.Tickets;
 using HelpDesk.Application.Tickets.Dtos;
 using HelpDesk.Application.Common.Exceptions;
+using HelpDesk.Application.Common.Interfaces;
 using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
 using Moq;
@@ -101,6 +102,50 @@ public class TicketServiceTests
 
         Assert.NotNull(result);
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_ShouldReturnFilteredPageMetadata()
+    {
+        Ticket first = Ticket.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "First",
+            "First description",
+            TicketPriority.High);
+        Ticket second = Ticket.Create(
+            first.CategoryId,
+            Guid.NewGuid(),
+            "Second",
+            "Second description",
+            TicketPriority.High);
+
+        _ticketRepositoryMock
+            .Setup(x => x.GetPagedAsync(
+                It.Is<TicketQuery>(query =>
+                    query.Priority == TicketPriority.High &&
+                    query.Page == 2 &&
+                    query.PageSize == 1),
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(([second], 2));
+
+        TicketPageResponse result = await _ticketService.GetPageAsync(
+            new TicketQuery(Priority: TicketPriority.High, Page: 2, PageSize: 1));
+
+        Assert.Single(result.Items);
+        Assert.Equal(second.Id, result.Items[0].Id);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.TotalPages);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(1, result.PageSize);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_WhenPageIsInvalid_ShouldThrow()
+    {
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _ticketService.GetPageAsync(new TicketQuery(Page: 0)));
     }
 
     [Fact]

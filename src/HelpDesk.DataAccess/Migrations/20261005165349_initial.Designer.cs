@@ -13,7 +13,7 @@ namespace HelpDesk.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20261005165349_initial")]
-    partial class initial
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

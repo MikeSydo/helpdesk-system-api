@@ -36,6 +36,34 @@ public sealed class TicketService(
         return [.. tickets.Select(MapToResponse)];
     }
 
+    public async Task<TicketPageResponse> GetPageAsync(
+        TicketQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        query.Validate();
+
+        Guid? ownerId = currentUser?.Role == UserRole.User
+            ? currentUser.UserId
+            : null;
+
+        (IReadOnlyList<Ticket> items, int totalCount) = await ticketRepository.GetPagedAsync(
+            query,
+            ownerId,
+            cancellationToken);
+
+        int totalPages = totalCount == 0
+            ? 0
+            : (int)Math.Ceiling(totalCount / (double)query.PageSize);
+
+        return new TicketPageResponse(
+            [.. items.Select(MapToResponse)],
+            query.Page,
+            query.PageSize,
+            totalCount,
+            totalPages);
+    }
+
     public async Task<TicketResponse> CreateAsync(CreateTicketRequest request, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         if (request.CategoryId == Guid.Empty)

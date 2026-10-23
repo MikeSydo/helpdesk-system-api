@@ -2,7 +2,6 @@
 using HelpDesk.Application.Tickets.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using HelpDesk.API.Security;
 using HelpDesk.Application.Common.Exceptions;
 using HelpDesk.Application.Common.Interfaces;
 
@@ -16,9 +15,11 @@ public class TicketsController(
     ICurrentUser currentUser) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<TicketResponse>>> GetTickets(CancellationToken cancellationToken)
+    public async Task<ActionResult<TicketPageResponse>> GetTickets(
+        [FromQuery] TicketQuery query,
+        CancellationToken cancellationToken)
     {
-        var tickets = await ticketsService.GetAllAsync(cancellationToken);
+        TicketPageResponse tickets = await ticketsService.GetPageAsync(query, cancellationToken);
         return Ok(tickets);
     }
 

@@ -1,5 +1,7 @@
 ﻿using HelpDesk.Application.Tickets;
+using HelpDesk.Application.Tickets.Dtos;
 using HelpDesk.Domain.Entities;
+using HelpDesk.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.DataAccess.Repositories;
@@ -16,6 +18,44 @@ public class TicketRepository(AppDbContext dbContext) : ITicketRepository
     public async Task<IReadOnlyList<Ticket>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await dbContext.Tickets.AsNoTracking().ToListAsync(cancellationToken: cancellationToken);
+    }
+
+    public async Task<(IReadOnlyList<Ticket> Items, int TotalCount)> GetPagedAsync(
+        TicketQuery query,
+        Guid? ownerId,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<Ticket> tickets = dbContext.Tickets.AsNoTracking();
+
+        if (ownerId is Guid userId)
+        {
+            tickets = tickets.Where(ticket => ticket.CreatedByUserId == userId);
+        }
+
+        if (query.Status is TicketStatus status)
+        {
+            tickets = tickets.Where(ticket => ticket.Status == status);
+        }
+
+        if (query.Priority is TicketPriority priority)
+        {
+            tickets = tickets.Where(ticket => ticket.Priority == priority);
+        }
+
+        if (query.CategoryId is Guid categoryId)
+        {
+            tickets = tickets.Where(ticket => ticket.CategoryId == categoryId);
+        }
+
+        int totalCount = await tickets.CountAsync(cancellationToken);
+        List<Ticket> items = await tickets
+            .OrderBy(ticket => ticket.CreatedAt)
+            .ThenBy(ticket => ticket.Id)
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public async Task AddAsync(Ticket ticket, CancellationToken cancellationToken = default)
